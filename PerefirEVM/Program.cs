@@ -15,6 +15,7 @@ namespace PerefirEVM
             Console.WriteLine(numInNotation);
             Console.WriteLine(GetDecimalNumber(16, numInNotation));
 
+            List<char> notationAlphabet = new List<char>();// { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };//, '10', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
             int inputValue;
             Console.WriteLine("Из какой системы счисления нужно перевести число?\n" +
                 "[1]: Двоичная\n" +
@@ -57,6 +58,14 @@ namespace PerefirEVM
                     }
             }
 
+            for (int i = 0; i < fromNotation; i++)
+            {
+                if (i <= 9)
+                    notationAlphabet.Add((char)(48 + i));
+                else if (i >= 10)
+                    notationAlphabet.Add((char)(55 + i));
+            }
+
             inputStringValue = Console.ReadLine();
             isNumber = int.TryParse(inputStringValue, out inputValue);
             while (isNumber != true)
@@ -85,9 +94,25 @@ namespace PerefirEVM
 
             while (isCorrect != true)
             {
-                for (int i = 0; i < inputStringValue)
+                bool wasDot = false;
+                for (int iter = 0; iter < inputStringValue.Length; iter++)
                 {
-
+                    if (inputStringValue[iter] == '.' || inputStringValue[iter] == ',')
+                    {
+                        if (wasDot)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            wasDot = true;
+                        }
+                    }
+                    else if (fromNotation <= 10)
+                    {
+                        if (inputStringValue[iter] < '0' || inputStringValue[iter] > '9')
+                            continue;
+                    }
                 }
             }
 
