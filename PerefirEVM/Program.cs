@@ -69,10 +69,6 @@ namespace PerefirEVM
                     notationAlphabetFrom.Add((char)(55 + i));
             }
 
-            //string numInNotation = GetNumberWithNotationFromDecimal(2, notationAlphabet, 10.1f, 4);
-            //Console.WriteLine(numInNotation);
-            //Console.WriteLine(GetDecimalNumber(2, notationAlphabet, numInNotation));
-
             //Ввод системы счисления, в которую будет переведено число 
             int toNotation = 0;
             inputStringValue = Console.ReadLine();
