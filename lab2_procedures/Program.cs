@@ -130,7 +130,7 @@ namespace lab2_procedures
             
             if (_alphabet.Count <= 1)
             {
-
+                return _alphabet;
             }
             else if (_alphabet.Count == 2)
             {

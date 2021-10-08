@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ namespace lab2_OOP
 {
     class Program
     {
-        struct CharStats
+        public struct CharStats
         {
             public char c;
             public int n;
@@ -21,15 +22,30 @@ namespace lab2_OOP
                 code = "";
             }
 
+            public CharStats(char _c, int _n, string _code)
+            {
+                c = _c;
+                n = _n;
+                code = _code;
+            }
+
             public void inc()
             {
                 n++;
             }
         }
 
-        struct AlphabetManager
+        public struct AlphabetManager
         {
             public List<CharStats> alphabet;
+
+            public CharStats GetCharStats(int i)
+            {
+                if (alphabet.Count > i && i >= 0)
+                    return alphabet[i];
+                else
+                    return new CharStats();
+            }
 
             public int Find(char _char)
             {
@@ -119,7 +135,13 @@ namespace lab2_OOP
 
                 alphabetCodes = MethodShannonFanoCoding(alphabetCodes);
 
-                WriteAlphabet("alphabet.txt", alphabetCodes);
+                alphabet.Clear();
+                foreach (var elem in alphabetCodes)
+                {
+                    alphabet.Add(new CharStats(elem.c, elem.n, elem.code));
+                }
+
+                MenuManager.WriteAlphabet("alphabet.txt", alphabetCodes);
             }
 
             public static List<(char, int, string)> MethodShannonFanoCoding(List<(char c, int n, string code)> _alphabet)
@@ -219,7 +241,7 @@ namespace lab2_OOP
             }
         }
 
-        public class MenuManager
+        public static class MenuManager
         {
             public static string ReadTextFromFile(string _path)
             {
@@ -246,10 +268,10 @@ namespace lab2_OOP
                 fileStream.Close();
             }
 
-            public static List<(char, int, string)> ReadAlphabet(string _path)
+            public static AlphabetManager ReadAlphabet(string _path)
             {
                 string line;
-                List<(char, int, string)> alphabet = new List<(char, int, string)>();
+                AlphabetManager alphabetManager = new AlphabetManager();
                 char c = ' ';
                 string code = "";
                 StreamReader fileStream = new StreamReader(_path);
@@ -260,7 +282,7 @@ namespace lab2_OOP
                     if (line.Length <= 2)
                     {
                         Console.WriteLine("Файл с алфавитом имеет ошибки");
-                        return null;
+                        return new AlphabetManager();
                     }
                     else
                     {
@@ -268,7 +290,7 @@ namespace lab2_OOP
                         if (line[1] != ' ')
                         {
                             Console.WriteLine("Файл с алфавитом имеет ошибки");
-                            return null;
+                            return new AlphabetManager();
                         }
                         else
                         {
@@ -277,14 +299,14 @@ namespace lab2_OOP
                                 code += line[i];
                             }
 
-                            alphabet.Add((c, 0, code));
+                            alphabetManager.alphabet.Add(new CharStats(c, 0, code));
                         }
                     }
 
                 }
 
                 fileStream.Close();
-                return alphabet;
+                return alphabetManager;
             }
 
             public static void WriteAlphabet(string _path, List<(char c, int n, string code)> _alphabet)
@@ -314,9 +336,9 @@ namespace lab2_OOP
                 return inputValue;
             }
 
-            static void Menu()
+            public static void Menu()
             {
-                List<(char, int, string)> alphabet = new List<(char, int, string)>();
+                AlphabetManager alphabetManager = new AlphabetManager();
                 while (true)
                 {
                     Console.WriteLine("[1]: Закодировать текст\n[2]: Расшифровать текст\n[0]: Выйти из программы");
@@ -329,19 +351,19 @@ namespace lab2_OOP
                         string text = ReadTextFromFile(filePath + ".txt");
                         if (text != "")
                         {
-                            alphabet = GetAlphabet(text);
-                            CodeText(text, filePath + "_coded.txt", GetAlphabet(text));
+                            alphabetManager = new AlphabetManager(text);
+                            CodeText(text, filePath + "_coded.txt", alphabetManager);
                         }
                     }
                     else if (choice == 2)
                     {
                         Console.WriteLine("Введите название файла, в котором хранится текст, который нужно раскодировать");
                         string filePath = Console.ReadLine();
-                        if (alphabet == null)
-                            alphabet = ReadAlphabet("alphabet.txt");
+                        if (alphabetManager.alphabet.Count == 0)
+                            alphabetManager = ReadAlphabet("alphabet.txt");
                         string text = ReadTextFromFile(filePath + ".txt");
                         if (text != "")
-                            DecodeText(text, filePath + "_decoded.txt", alphabet);
+                            DecodeText(text, filePath + "_decoded.txt", alphabetManager);
                     }
                     else
                     {
@@ -351,64 +373,64 @@ namespace lab2_OOP
                     Console.WriteLine();
                 }
             }
-        }
-
-        public static void CodeText(string _text, string _outputFile, List<(char c, int n, string code)> _alphabet)
-        {
-            string codedText = "";
-            char currentChar;
-            for (int i = 0; i < _text.Length; i++)
+            public static void CodeText(string _text, string _outputFile, AlphabetManager _alphabetManager)
             {
-                currentChar = _text[i];
-                if (_alphabet.Exists(elem => elem.c == currentChar)) //Если в алфавите есть данный символ, то в закодированный текст дописывается код принадлежащий данному символу
+                string codedText = "";
+                char currentChar;
+                for (int i = 0; i < _text.Length; i++)
                 {
-                    codedText += _alphabet.Find(stat => stat.c == currentChar).code;
-                }
-                else
-                {
-                    codedText += currentChar;
-                }
-            }
-
-            //Результат записывается в файл
-            WriteTextToFile(_outputFile, codedText);
-        }
-
-        public static void DecodeText(string _text, string _outputFile, List<(char c, int n, string code)> _alphabet)
-        {
-            string decodedText = "";
-            //Считанный код символа
-            string currentCharCode = "";
-            for (int i = 0; i < _text.Length; i++)
-            {
-                //Если в текущий символ текста является цифрой двоичного кода, то эта цифра дописывается в конец кода символа
-                if (_text[i] == '0' || _text[i] == '1')
-                {
-                    currentCharCode += _text[i];
-
-                    //Если код символа совпадает с каким-либо кодом символа из заданного списка _alphabet, то его можно декодировать
-                    if (_alphabet.Exists(elem => elem.code == currentCharCode))
+                    currentChar = _text[i];
+                    int find = _alphabetManager.Find(currentChar);
+                    if (find != -1) //Если в алфавите есть данный символ, то в закодированный текст дописывается код принадлежащий данному символу
                     {
-                        //Символ в декодированном виде дописывается в декодированный текст
-                        char decodedChar = _alphabet.Find(elem => elem.code == currentCharCode).c;
-                        decodedText += decodedChar;
-                        //А код текущего символа стирается
-                        currentCharCode = "";
+                        codedText += _alphabetManager.GetCharStats(find).code;
+                    }
+                    else
+                    {
+                        codedText += currentChar;
                     }
                 }
-                else //Иначе в тексте есть ошибка
-                {
-                    decodedText += _text[i];
-                }
+
+                //Результат записывается в файл
+                WriteTextToFile(_outputFile, codedText);
             }
 
-            //Результат записывается в файл
-            WriteTextToFile(_outputFile, decodedText);
+            public static void DecodeText(string _text, string _outputFile, AlphabetManager _alphabetManager)
+            {
+                string decodedText = "";
+                //Считанный код символа
+                string currentCharCode = "";
+                for (int i = 0; i < _text.Length; i++)
+                {
+                    //Если в текущий символ текста является цифрой двоичного кода, то эта цифра дописывается в конец кода символа
+                    if (_text[i] == '0' || _text[i] == '1')
+                    {
+                        currentCharCode += _text[i];
+                        int find = _alphabetManager.Find(currentCharCode);
+                        //Если код символа совпадает с каким-либо кодом символа из заданного списка _alphabet, то его можно декодировать
+                        if (find != -1)
+                        {
+                            //Символ в декодированном виде дописывается в декодированный текст
+                            char decodedChar = _alphabetManager.GetCharStats(find).c;
+                            decodedText += decodedChar;
+                            //А код текущего символа стирается
+                            currentCharCode = "";
+                        }
+                    }
+                    else //Иначе в тексте есть ошибка
+                    {
+                        decodedText += _text[i];
+                    }
+                }
+
+                //Результат записывается в файл
+                WriteTextToFile(_outputFile, decodedText);
+            }
         }
 
         static void Main(string[] args)
         {
-            Menu();
+            MenuManager.Menu();
         }
     }
 }
